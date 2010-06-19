@@ -1,0 +1,71 @@
+#!/usr/bin/python
+
+# V0.4
+# Hack para buscar usando evolution-data-server
+# History
+# V0.2 - first Version
+# V0.3 - Jun 16 2010
+#     Exclude couchdb addressbooks as they usually hang
+#     Exlude contacts without email
+#     Report how many matches we got
+# V0.4 - Jun 19 2010
+#   Agrego opcion para que devuelva en formato rfc
+
+import evolution
+import sys, string
+from optparse import OptionParser
+
+
+def searchAddressbooks(query):
+
+    results_dict = {}
+
+    for addrDesc, addrName in evolution.ebook.list_addressbooks():
+        if (addrName.count("couchdb") != 0):
+            #Couchdb se suele colgar, lo excluyo de las busquedas
+            continue
+        addresses = evolution.ebook.open_addressbook(addrName)
+        results = addresses.search(query) # Returns List of results
+        for a in results:
+            email = a.get_property('email-1')
+            if (email is not None):
+                fullName = a.get_property('full-name')
+                nick = a.get_property('nickname')
+                results_dict[email.lower()] = (fullName, nick)
+    return results_dict
+
+def printAdresses(results, rfc):
+    if not rfc:
+        if (len(results) == 1):
+            print " 1 match! you are lucky"
+        else:   
+            print " %d matches, now use your brain" % len(results)
+        for email in results.keys():
+            print '%s\t%s\t%s' % (email, results[email][0], results[email][1])
+    else:
+        for email in results.keys():
+            print '\"%s\" <%s>' %(results[email][0], email)
+
+def main():
+    # Usage
+    usage = """usage: %prog [options] arg
+    Finds "arg" in the evolution address books
+    Returns an mutt compliant response unless with -r
+    """
+    # Manage options
+    parser = OptionParser(usage=usage)
+    parser.add_option("-r", "--rfc",
+                action="store_true", dest="rfc", default=False,
+                help="display contacts in rfc compliant style")
+
+    (options, args) = parser.parse_args()
+    if len(args) < 1:
+        parser.error("No string to search!")
+
+    results = searchAddressbooks(string.join(args, " "))
+    if (len(results) == 0):
+        sys.exit(1)
+    printAdresses(results,options.rfc)
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,4 @@
+This is a mirror of http://www.vim.org/scripts/script.php?script_id=3128
+
+This is a script using the User Complete feature to complete the email addresses from an external addressbook. It depends on an external app to get the contacts addreses, included in the package is an example that search the EDS.
+ Its a perfect companion when you edit headers while sending mails in mutt
